@@ -941,6 +941,8 @@ public class R40000XWIKI6990DataMigration extends AbstractHibernateDataMigration
                 List<Object[]> results = session.createQuery(
                     "select obj.id, obj.name, obj.className, obj.number from " + BaseObject.class.getName()
                     + " as obj").list();
+                Map<Long, Long> revMap = new HashMap<Long, Long>();
+
                 for (Object[] result : results) {
                     long oldId = (Long) result[0];
                     String docName = (String) result[1];
@@ -954,6 +956,14 @@ public class R40000XWIKI6990DataMigration extends AbstractHibernateDataMigration
 
                     if (oldId != newId) {
                         map.put(oldId, newId);
+                    }
+                    Long oldId2 = revMap.get(newId);
+                    if (oldId2 == null) {
+                        revMap.put(newId, oldId);
+                    } else {
+                        // migration seems to produce duplicate values 
+                        logger.error(String.format("we have a duplicate new id for %d: both %d at %s@@%s[%d]] and %d",
+                                                   newId, oldId, docName, className, number, oldId2));
                     }
                 }
 
