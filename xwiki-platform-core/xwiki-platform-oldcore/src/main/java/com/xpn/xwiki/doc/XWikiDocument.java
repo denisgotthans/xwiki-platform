@@ -3659,6 +3659,27 @@ public class XWikiDocument implements DocumentModelBridge, Cloneable
             }
         }
 
+        // smaller patch ...
+        final XWikiDocument otherDocument = doc;
+
+        // Attachments
+        List<XWikiAttachment> attachments = getAttachmentList();
+        List<XWikiAttachment> otherAttachments = otherDocument.getAttachmentList();
+        if (attachments.size() != otherAttachments.size()) {
+            return false;
+        }
+        for (XWikiAttachment attachment : attachments) {
+            XWikiAttachment otherAttachment = otherDocument.getAttachment(attachment.getFilename());
+            try {
+                if (otherAttachment == null || !attachment.equalsData(otherAttachment, null)) {
+                    return false;
+                }
+            } catch (XWikiException e) {
+                throw new RuntimeException(String.format("Failed to compare attachments with reference [%0]",
+                    attachment.getReference()), e);
+            }
+        }
+ 
         return true;
     }
 
@@ -5793,9 +5814,14 @@ public class XWikiDocument implements DocumentModelBridge, Cloneable
             if (newAttach == null) {
                 difflist.add(new AttachmentDiff(fileName, origAttach.getVersion(), null));
             } else {
-                if (!origAttach.getVersion().equals(newAttach.getVersion())) {
+              try {
+				if (newAttach.getDoc()==null) { newAttach.setDoc(toDoc); }
+                if (!origAttach.equalsData(newAttach, context)) {
                     difflist.add(new AttachmentDiff(fileName, origAttach.getVersion(), newAttach.getVersion()));
                 }
+              } catch (XWikiException e) {
+                  LOGGER.error("Failed to compare attachments [{}] and [{}]", origAttach, newAttach, e);
+              }
             }
         }
 

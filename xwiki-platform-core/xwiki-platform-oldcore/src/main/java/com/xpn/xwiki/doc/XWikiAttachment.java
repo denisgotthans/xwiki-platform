@@ -28,6 +28,8 @@ import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
@@ -767,6 +769,61 @@ public class XWikiAttachment implements Cloneable
         }
 
         return loadArchive(context).getRevision(this, rev, context);
+    }
+
+
+    /**
+     * Apply the provided attachment so that the current one contains the same informations and indicate if it was
+     * necessary to modify it in any way.
+     * 
+     * @param attachment the attachment to apply
+     * @return true if the attachment has been modified
+     * @since 5.3M2
+     */
+    public boolean apply(XWikiAttachment attachment)
+    {
+        boolean modified = false;
+
+        if (getFilesize() != attachment.getFilesize()) {
+            setFilesize(attachment.getFilesize());
+        }
+
+        try {
+            if (!IOUtils.contentEquals(getContentInputStream(null), attachment.getContentInputStream(null))) {
+                setContent(attachment.getContentInputStream(null));
+                modified = true;
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to compare content of attachments", e);
+        }
+
+        return modified;
+    }
+
+    public boolean equalsData(XWikiAttachment otherAttachment, XWikiContext xcontext) throws XWikiException
+    {
+        try {
+            if (getFilesize() == otherAttachment.getFilesize()) {
+                InputStream is = getContentInputStream(xcontext);
+
+                try {
+                    InputStream otherIS = otherAttachment.getContentInputStream(xcontext);
+
+                    try {
+                        return IOUtils.contentEquals(is, otherIS);
+                    } finally {
+                        otherIS.close();
+                    }
+                } finally {
+                    is.close();
+                }
+            }
+        } catch (Exception e) {
+            throw new XWikiException(XWikiException.MODULE_XWIKI_DOC, XWikiException.ERROR_XWIKI_UNKNOWN,
+                "Failed to compare attachments", e);
+        }
+
+        return false;
     }
 
 }
