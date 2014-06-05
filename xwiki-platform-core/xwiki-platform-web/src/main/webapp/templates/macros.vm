@@ -1,4 +1,4 @@
-##
+#
 ##
 ## #template("name.vm")
 ## Searches for the given velocity template and interprets it.
@@ -1264,7 +1264,7 @@ ${Msz}Mb##
   #if("$!options.rowCount" != '') #set($count = $options.rowCount) #else #set($count = 15) #end
   #if("$!options.maxPages" != '') #set($maxPages = $options.maxPages) #else #set($maxPages = 10) #end
   #if("$!options.selectedColumn" != '') #set($selectedColumn = $options.selectedColumn) #end
-  #if("$!options.callback" != '') #set($callback = $options.callback) #end
+  #if("$!options.callback" != '') #set($callback = $options.callback) #else #set($callback = '') #end
   #if("$!options.tagCloud" == '' || $options.tagCloud == false) #set($tagcloud=false) #else #set($tagcloud = true) #end
   #if("$!options.javascriptName" != '') #set($jsName = $options.javascriptName) #else #set($jsName = "livetable_$divid") #end
   #if("$!options.topFilters" != '') #set($topfilters = $options.topFilters) #end
@@ -1468,7 +1468,7 @@ ${Msz}Mb##
   function startup() {
     if (XWiki && XWiki.widgets && XWiki.widgets.LiveTable) {
       // Make sure the Livetable widgets exists (It does not in the WYSIWYG for example).
-    #if($callback)
+    #if($callback!='')
       window["$jsName"] = new XWiki.widgets.LiveTable("$dataurl", "${divid}", $callback ,{
                            "maxPages":$maxPages
                         ,"limit":$count
